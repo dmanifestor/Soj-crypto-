@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meridian Bancorp</title>
+    <script>
+      // Single Page Apps for GitHub Pages: translate subpath into hash route
+      (function() {
+        var l = window.location;
+        var pathname = l.pathname;
+        // Split pathname segments
+        var segments = pathname.replace(/^\/+|\/+$/g, '').split('/');
+        // First segment is repo name if hosted at username.github.io/repo-name/
+        var isSubdir = segments.length > 0 && segments[0] !== '';
+        var repo = isSubdir ? '/' + segments[0] : '';
+        var subpath = (isSubdir ? segments.slice(1) : segments).join('/');
+        var targetHash = subpath ? '#' + subpath : '';
+        var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + repo + '/' + (targetHash || '') + (l.search || '');
+        l.replace(redirectUrl);
+      })();
+    </script>
+  </head>
+  <body style="background-color: #050c1e; color: #ffffff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+    <div style="text-align: center;">
+      <h2 style="color: #facc15;">Redirecting to Meridian Bancorp...</h2>
+      <p style="color: #94a3b8;">If you are not redirected automatically, <a href="./" style="color: #60a5fa;">click here</a>.</p>
+    </div>
+  </body>
+</html>
