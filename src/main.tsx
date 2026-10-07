@@ -299,13 +299,37 @@ function safelyInstallWebGuards() {
     const origConsoleError = console.error;
     console.error = function (...args: unknown[]) {
       try {
-        const str = args.map((a) => (a instanceof Error ? a.message : String(a))).join(' ');
-        if (str.toLowerCase().includes('non-finite')) {
+        const str = args.map((a) => (a instanceof Error ? (a.stack || a.message) : String(a))).join(' ');
+        if (str.toLowerCase().includes('non-finite') || str.includes('WebSocket') || str.includes('@vite/client')) {
           return;
         }
       } catch {}
       origConsoleError.apply(console, args);
     };
+
+    window.addEventListener('unhandledrejection', (event) => {
+      const reason = event?.reason;
+      const msg = (reason && (reason.message || String(reason))) || '';
+      const stack = (reason && reason.stack) || '';
+      if (
+        msg.includes('WebSocket') || 
+        msg.includes('ws') || 
+        stack.includes('@vite/client') ||
+        stack.includes('client:225')
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation?.();
+      }
+    });
+
+    window.addEventListener('error', (event) => {
+      const msg = event?.message || '';
+      const filename = event?.filename || '';
+      if (msg.includes('WebSocket') || filename.includes('@vite/client')) {
+        event.preventDefault();
+        event.stopImmediatePropagation?.();
+      }
+    });
   } catch {}
 }
 

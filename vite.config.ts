@@ -4,7 +4,10 @@ import tailwindcss from '@tailwindcss/vite';
 
 // Determine deployment base path
 const getBase = () => {
-  if (process.env.VITE_BASE_PATH) return process.env.VITE_BASE_PATH;
+  const p = process.env.VITE_BASE_PATH;
+  if (p && p.trim()) {
+    return p.startsWith('/') ? p : `/${p}`;
+  }
   return '/';
 };
 
@@ -19,5 +22,6 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     allowedHosts: true,
+    hmr: false,
   },
 });
