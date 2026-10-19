@@ -10,52 +10,949 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <script>
-      // Suppress Vite HMR WebSocket connection errors in environments where HMR is disabled
-      window.addEventListener('unhandledrejection', function(event) {
-        var reason = event && event.reason;
-        var msg = (reason && (reason.message || reason.toString())) || '';
-        var stack = (reason && reason.stack) || '';
-        if (
-          msg.includes('WebSocket') || 
-          msg.includes('ws') || 
-          stack.includes('@vite/client') || 
-          stack.includes('client:225')
-        ) {
-          event.preventDefault();
-          event.stopImmediatePropagation && event.stopImmediatePropagation();
-        }
-      });
-      window.addEventListener('error', function(event) {
-        var msg = (event && (event.message || '')) || '';
-        var filename = (event && (event.filename || '')) || '';
-        if (msg.includes('WebSocket') || filename.includes('@vite/client')) {
-          event.preventDefault();
-          event.stopImmediatePropagation && event.stopImmediatePropagation();
-        }
-      });
-    </script>
+    <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="bg-[#050c1e] text-white min-h-screen" style="background-color: #050c1e; margin: 0; color: #ffffff;">
-    <div id="root">
-      <div id="meridian-loader" style="min-height: 100vh; background-color: #050c1e; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; font-family: system-ui, -apple-system, sans-serif;">
-        <div style="width: 44px; height: 44px; border: 3px solid rgba(250, 204, 21, 0.2); border-top-color: #facc15; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-        <div style="margin-top: 18px; font-weight: 800; font-size: 17px; letter-spacing: 0.05em; color: #facc15;">MERIDIAN BANCORP</div>
-        <div id="meridian-loader-notice" style="margin-top: 6px; font-size: 12px; color: #94a3b8; font-family: monospace;">Loading Institutional Portal...</div>
-        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+  <body>
+    <!-- Top Global Header -->
+    <header id="app-header">
+      <div class="brand-container" id="brand-nav-btn">
+        <div class="brand-logo-icon">
+          <div class="brand-logo-inner">🏛️</div>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">
+            MERIDIAN <span>BANCORP</span>
+            <span class="badge-private">PRIVATE</span>
+          </div>
+          <div class="brand-sub">Private Wealth & Digital Custody</div>
+        </div>
+      </div>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="nav-links">
+        <button class="nav-btn active" data-tab="home" id="nav-home"><span>🏠</span> Home</button>
+        <button class="nav-btn" data-tab="client-dashboard" id="nav-dashboard"><span>💼</span> Dashboard</button>
+        <button class="nav-btn" data-tab="trade" id="nav-trade"><span>📈</span> Spot</button>
+        <button class="nav-btn" data-tab="perps" id="nav-perps"><span>⚡</span> Perps</button>
+        <button class="nav-btn" data-tab="markets" id="nav-markets"><span>🌐</span> Markets</button>
+        <button class="nav-btn" data-tab="portfolio" id="nav-portfolio"><span>📊</span> Portfolio</button>
+        <button class="nav-btn" data-tab="requests" id="nav-requests"><span>📝</span> Requests</button>
+        <button class="nav-btn" data-tab="api-docs" id="nav-api"><span>⚙️</span> API Docs</button>
+      </nav>
+
+      <!-- Action Bar (Latency, Quick Actions, Profile) -->
+      <div class="header-actions">
+        <div class="latency-indicator" title="Network Round-Trip Latency">
+          <span class="latency-dot"></span>
+          <span id="latency-text">14ms</span>
+        </div>
+        
+        <button class="btn-pill btn-deposit" id="btn-open-deposit"><span>⬇</span> Deposit</button>
+        <button class="btn-pill btn-withdraw" id="btn-open-withdraw"><span>⬆</span> Withdraw</button>
+        <button class="btn-pill btn-swap" id="btn-open-swap"><span>⇄</span> Swap</button>
+
+        <div id="user-profile-widget" style="position: relative;">
+          <!-- Populated by script.js -->
+        </div>
+
+        <div id="user-menu-dropdown">
+          <div style="padding: 6px 8px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 4px;">
+            <div id="dropdown-user-name" style="font-weight: 700; font-size: 13px;">Joel Dan</div>
+            <div id="dropdown-user-email" style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">joeldan228@gmail.com</div>
+          </div>
+          <div class="user-menu-item" id="menu-switch-role">
+            <span>🔄</span> Switch to <span id="menu-switch-target-role">Client</span>
+          </div>
+          <div class="user-menu-item" id="menu-quick-admin">
+            <span>👑</span> Use Joel Dan (Admin)
+          </div>
+          <div class="user-menu-item" id="menu-quick-client">
+            <span>👤</span> Use Alex Vance (Client)
+          </div>
+          <div class="user-menu-item" id="menu-sign-out" style="color: var(--color-red); border-top: 1px solid var(--border-subtle); margin-top: 4px; padding-top: 8px;">
+            <span>🚪</span> Sign Out
+          </div>
+        </div>
+
+        <button class="mobile-menu-btn" id="mobile-toggle-btn" aria-label="Toggle navigation">☰</button>
+      </div>
+    </header>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-drawer-menu">
+      <button class="mob-drawer-btn active" data-tab="home"><span>🏠</span> Home</button>
+      <button class="mob-drawer-btn" data-tab="client-dashboard"><span>💼</span> Wealth Dashboard</button>
+      <button class="mob-drawer-btn" data-tab="trade"><span>📈</span> Spot Trading</button>
+      <button class="mob-drawer-btn" data-tab="perps"><span>⚡</span> Perpetual Futures</button>
+      <button class="mob-drawer-btn" data-tab="markets"><span>🌐</span> Markets Screener</button>
+      <button class="mob-drawer-btn" data-tab="portfolio"><span>📊</span> Portfolio & Treasury</button>
+      <button class="mob-drawer-btn" data-tab="requests"><span>📝</span> Requests Manager</button>
+      <button class="mob-drawer-btn" data-tab="api-docs"><span>⚙️</span> API Documentation</button>
+      <button class="mob-drawer-btn" data-tab="login" style="border-top: 1px solid var(--border-subtle); margin-top: 4px;"><span>🔐</span> Sign In / Register</button>
+    </div>
+
+    <!-- Live Market Ticker Marquee -->
+    <div id="ticker-bar">
+      <div class="ticker-track" id="ticker-track-content">
+        <!-- Injected via script.js -->
       </div>
     </div>
-    <script>
-      setTimeout(function() {
-        var loader = document.getElementById('meridian-loader');
-        if (loader) {
-          var notice = document.getElementById('meridian-loader-notice');
-          if (notice) {
-            notice.innerHTML = 'Still loading? <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;"><button onclick="window.location.reload()" style="background:#facc15;color:#050c1e;border:none;padding:6px 14px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">Refresh Portal</button><button onclick="try{localStorage.clear();}catch(e){}window.location.hash=\'homepage\';window.location.reload();" style="background:#1e3a8a;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;">Reset Cache</button></div>';
-          }
-        }
-      }, 4000);
-    </script>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Main Views Container -->
+    <main id="main-content">
+      
+      <!-- ====================================================================
+           VIEW 1: HOME PAGE
+           ==================================================================== -->
+      <section id="view-home" class="tab-view active">
+        <div class="hero-section">
+          <div class="hero-glow"></div>
+          <div class="hero-pill">✨ INSTITUTIONAL-GRADE CRYPTO ASSET CUSTODY & TRADING</div>
+          <h1 class="hero-title">
+            The Institutional Gateway to <span>Digital Wealth Management</span>
+          </h1>
+          <p class="hero-desc">
+            Meridian Bancorp provides high-net-worth clients and capital desks with segregated custodial cold-storage, real-time liquidity execution, and audited compliance architecture.
+          </p>
+          <div class="hero-actions">
+            <button class="btn-primary-gold" id="hero-btn-login">Client Portal Login →</button>
+            <button class="btn-secondary-blue" id="hero-btn-trade">Open Spot Exchange 📈</button>
+            <button class="btn-secondary-blue" id="hero-btn-dashboard">View Wealth Dashboard 💼</button>
+          </div>
+        </div>
+
+        <!-- Live Platform Key Statistics -->
+        <div class="home-stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Assets Under Custody</div>
+            <div class="stat-value">$14.82B</div>
+            <div class="stat-sub">+18.4% YoY Growth</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">24h Execution Volume</div>
+            <div class="stat-value" id="home-total-volume">$5.24B</div>
+            <div class="stat-sub">High-Frequency Matching Engine</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cold Storage Security</div>
+            <div class="stat-value">100%</div>
+            <div class="stat-sub">MPC Multi-Sig Architecture</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Available Client Reserve</div>
+            <div class="stat-value gold" id="home-reserve-balance">$47,986.00</div>
+            <div class="stat-sub">1:1 Fully Reserved Backing</div>
+          </div>
+        </div>
+
+        <!-- Platform Pillars & Architecture -->
+        <div class="home-features-section">
+          <div class="section-header">
+            <div class="section-pill">Why Meridian Bancorp</div>
+            <h2 class="section-title">Built for Discerning Private Clients</h2>
+            <p class="section-desc">Experience institutional capital operations with uncompromising security and real-time execution.</p>
+          </div>
+
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">🛡️</div>
+              <h3>Tier-4 Custodial Vaults</h3>
+              <p>Hardware-isolated multi-party computation (MPC) keys with geographic sharding and timed multi-signature release controls.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⚡</div>
+              <h3>Sub-Millisecond Matching</h3>
+              <p>Ultra-low latency spot and perpetual contract order routing engine processing over 250,000 orders per second with zero slippage.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📑</div>
+              <h3>Audit-Ready Treasury Ledger</h3>
+              <p>Cryptographically verifiable proof-of-reserves, real-time refund requests processing, and downloadable institutional reports.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🌐</div>
+              <h3>Cross-Chain Multi-Network</h3>
+              <p>Native settlement support across Tron (TRC-20), BNB Smart Chain (BEP-20), Ethereum (ERC-20), Solana, and Bitcoin ledgers.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🔐</div>
+              <h3>Role-Based Access Control</h3>
+              <p>Strict data isolation ensuring private users only access their personal funds while verified operators oversee requests compliance.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">💬</div>
+              <h3>Dedicated Private Banker</h3>
+              <p>Round-the-clock advisory desk and prioritized withdrawal clearance for verified accounts and institutional desks.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 2: CLIENT WEALTH DASHBOARD
+           ==================================================================== -->
+      <section id="view-client-dashboard" class="tab-view">
+        <div class="client-dashboard-wrap">
+          <div id="admin-dashboard-inspection-banner"></div>
+          <div class="dashboard-hero-card">
+            <div class="client-profile-header">
+              <div class="client-identity">
+                <div class="client-avatar" id="client-avatar-letter">J</div>
+                <div>
+                  <div class="client-name-title" id="client-display-name">Joel Dan (Private Client)</div>
+                  <div class="client-account-tag" id="client-display-email">joeldan228@gmail.com • Primary Account #MB-884102</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button class="btn-pill btn-withdraw" id="dashboard-trigger-withdraw">Request Withdrawal</button>
+                <button class="btn-pill btn-deposit" id="dashboard-trigger-deposit">Deposit Funds</button>
+              </div>
+            </div>
+
+            <!-- Balances and Fee Summary -->
+            <div class="dashboard-metrics-row">
+              <div class="metric-box highlight">
+                <div class="title">Available Reserve Balance</div>
+                <div class="amount gold" id="client-available-balance">$47,986.00</div>
+                <div style="font-size: 11px; color: var(--color-green); margin-top: 4px;">✓ Verified for immediate withdrawal</div>
+              </div>
+              <div class="metric-box">
+                <div class="title">Required Settlement Fee</div>
+                <div class="amount" id="client-required-fee">$5,960.00</div>
+                <div style="font-size: 11px; color: var(--accent-gold); margin-top: 4px;">Network compliance & liquidation gas escrow</div>
+              </div>
+              <div class="metric-box">
+                <div class="title">Total Historical Profits</div>
+                <div class="amount" style="color: var(--color-green);">+$71,250.00</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Accumulated across 8 distribution tranches</div>
+              </div>
+              <div class="metric-box">
+                <div class="title">Account Standing</div>
+                <div class="amount" style="font-size: 20px; color: #93c5fd; padding-top: 4px;">Private High-Tier</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Custody Vault Tier 1</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Destination Custody Wallets Panel -->
+          <div class="wallets-panel">
+            <div class="panel-title">
+              <span>🏦 Authorized Settlement Wallets</span>
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">Click to copy network address</span>
+            </div>
+            <div class="wallets-list" id="client-wallets-container">
+              <!-- Injected by script.js -->
+            </div>
+          </div>
+
+          <!-- Historical Investment & Settlement Tranches -->
+          <div class="settlement-history-panel">
+            <div class="panel-title">
+              <span>📜 Investment & Distribution Ledger</span>
+              <input type="text" id="history-search-input" placeholder="Search by date, notes or status..." style="max-width: 260px; font-size: 12px;" />
+            </div>
+            <div class="history-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Tranche ID</th>
+                    <th>Execution Date</th>
+                    <th>Invested Capital</th>
+                    <th>Gross Withdrawal</th>
+                    <th>Net Profit</th>
+                    <th>Settlement Fee</th>
+                    <th>Status</th>
+                    <th>Ledger Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="settlement-history-tbody">
+                  <!-- Injected by script.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 3: TRADING STATION (Spot & Perps)
+           ==================================================================== -->
+      <section id="view-trade" class="tab-view">
+        <div class="trading-station-grid">
+          <!-- Top Market Overview Bar -->
+          <div class="trade-header-bar">
+            <div class="trade-pair-info" style="position: relative;">
+              <div class="pair-selector-btn" id="pair-menu-toggle">
+                <span id="trade-active-pair-sym">BTC/USDT</span>
+                <span style="font-size: 12px; color: var(--accent-gold);">▼</span>
+              </div>
+              <div id="pair-selector-dropdown">
+                <!-- Injected via script.js -->
+              </div>
+              <div class="pair-price-display" id="trade-active-price">$89,450.00</div>
+              <span class="ticker-change pos" id="trade-active-change">+3.42%</span>
+            </div>
+
+            <div class="trade-market-stats">
+              <div class="stat-item-inline">
+                <span class="lbl">24h High</span>
+                <span id="trade-stat-high">$90,210.00</span>
+              </div>
+              <div class="stat-item-inline">
+                <span class="lbl">24h Low</span>
+                <span id="trade-stat-low">$86,120.00</span>
+              </div>
+              <div class="stat-item-inline">
+                <span class="lbl">24h Volume</span>
+                <span id="trade-stat-vol">2.84B USDT</span>
+              </div>
+              <div class="stat-item-inline">
+                <span class="lbl">Funding Rate</span>
+                <span id="trade-stat-funding" style="color: var(--accent-gold);">0.0100% (4h)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Candlestick / Line Chart Panel -->
+          <div class="chart-panel-container">
+            <div class="chart-controls-bar">
+              <div class="timeframe-buttons" id="chart-tf-buttons">
+                <button class="tf-btn" data-tf="1m">1m</button>
+                <button class="tf-btn" data-tf="5m">5m</button>
+                <button class="tf-btn active" data-tf="15m">15m</button>
+                <button class="tf-btn" data-tf="1H">1H</button>
+                <button class="tf-btn" data-tf="4H">4H</button>
+                <button class="tf-btn" data-tf="1D">1D</button>
+                <button class="tf-btn" data-tf="1W">1W</button>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="tf-btn active" id="chart-type-toggle">Candles</button>
+                <button class="tf-btn" id="chart-ema-toggle">EMA (20)</button>
+                <button class="tf-btn" id="chart-vol-toggle">Volume</button>
+              </div>
+            </div>
+            <div class="chart-canvas-wrapper" id="chart-wrapper">
+              <canvas id="trading-canvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Live Order Book Panel -->
+          <div class="order-book-panel">
+            <div class="panel-header-subtle">
+              <span>Order Book</span>
+              <span style="font-family: var(--font-mono); font-size: 10px;">Depth 0.1</span>
+            </div>
+            <div class="order-book-table-head">
+              <span>Price (USDT)</span>
+              <span style="text-align: right;">Size</span>
+              <span style="text-align: right;">Total</span>
+            </div>
+            <div class="order-book-rows" id="ob-asks-list">
+              <!-- Asks injected here -->
+            </div>
+            <div class="ob-spread-bar">
+              <span id="ob-mid-price" style="color: var(--color-green);">$89,450.00</span>
+              <span style="font-size: 10px; color: var(--text-muted);" id="ob-spread-val">Spread: 0.01%</span>
+            </div>
+            <div class="order-book-rows" id="ob-bids-list">
+              <!-- Bids injected here -->
+            </div>
+          </div>
+
+          <!-- Order Placement Form -->
+          <div class="order-form-panel">
+            <div class="side-toggle-group">
+              <button class="side-btn buy active" id="btn-side-buy">Buy / Long</button>
+              <button class="side-btn sell" id="btn-side-sell">Sell / Short</button>
+            </div>
+
+            <div class="order-type-tabs">
+              <button class="ot-btn active" data-type="limit" id="ot-limit">Limit</button>
+              <button class="ot-btn" data-type="market" id="ot-market">Market</button>
+              <button class="ot-btn" data-type="stop" id="ot-stop">Stop</button>
+            </div>
+
+            <div class="form-group-custom" id="group-order-price">
+              <label>Order Price (USDT)</label>
+              <input type="number" id="input-order-price" step="0.01" value="89450.00" />
+            </div>
+
+            <div class="form-group-custom">
+              <label>Amount (<span id="form-base-asset">BTC</span>)</label>
+              <input type="number" id="input-order-amount" step="0.0001" placeholder="0.00" />
+            </div>
+
+            <!-- Percentage balance shortcuts -->
+            <div class="pct-buttons-row">
+              <button class="pct-btn" data-pct="25">25%</button>
+              <button class="pct-btn" data-pct="50">50%</button>
+              <button class="pct-btn" data-pct="75">75%</button>
+              <button class="pct-btn" data-pct="100">100%</button>
+            </div>
+
+            <!-- Leverage Slider (perpetual futures mode) -->
+            <div class="form-group-custom" id="leverage-group" style="display: none;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <span>Leverage</span>
+                <span id="leverage-val-label" style="color: var(--accent-gold); font-weight: 700;">10x</span>
+              </div>
+              <input type="range" id="input-leverage-slider" min="1" max="50" value="10" />
+            </div>
+
+            <!-- Total / Margin Summary -->
+            <div style="font-size: 11px; font-family: var(--font-mono); display: flex; flex-direction: column; gap: 4px; color: var(--text-muted); background: rgba(5,12,30,0.5); padding: 8px; border-radius: 4px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>Order Total:</span>
+                <span id="summary-order-total" style="color: #ffffff;">$0.00 USDT</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Est. Fee (0.04%):</span>
+                <span id="summary-order-fee">$0.00</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Available USDT:</span>
+                <span id="summary-avail-usdt" style="color: var(--accent-gold);">$42,800.00</span>
+              </div>
+            </div>
+
+            <button class="btn-place-order buy" id="btn-submit-order">Place Buy Order</button>
+          </div>
+
+          <!-- Bottom Positions & Orders Panel -->
+          <div class="positions-panel-bottom">
+            <div class="pos-tabs-row">
+              <button class="pos-tab-btn active" id="tab-positions-btn">Open Positions (<span id="count-positions">2</span>)</button>
+              <button class="pos-tab-btn" id="tab-orders-btn">Open Orders (<span id="count-orders">2</span>)</button>
+              <button class="pos-tab-btn" id="tab-trades-btn">Recent Order Flow</button>
+            </div>
+            <div class="history-table-wrap" style="max-height: 180px; overflow-y: auto;">
+              <table class="data-table">
+                <thead id="pos-table-thead">
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Side</th>
+                    <th>Size</th>
+                    <th>Entry Price</th>
+                    <th>Mark Price</th>
+                    <th>Margin</th>
+                    <th>Unrealized PnL</th>
+                    <th>Liq. Price</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="pos-table-tbody">
+                  <!-- Positions or Orders injected here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 4: MARKETS SCREENER
+           ==================================================================== -->
+      <section id="view-markets" class="tab-view">
+        <div class="markets-view-wrap">
+          <div class="markets-filter-bar">
+            <div class="category-filter-chips" id="market-category-chips">
+              <button class="cat-chip active" data-cat="all">All Markets</button>
+              <button class="cat-chip" data-cat="Layer 1">Layer 1</button>
+              <button class="cat-chip" data-cat="AI & Data">AI & Data</button>
+              <button class="cat-chip" data-cat="Infra">Infra</button>
+              <button class="cat-chip" data-cat="Meme">Meme</button>
+            </div>
+            <input type="text" id="market-search-input" placeholder="Search token (e.g. BTC, ETH, SOL)..." style="width: 260px; font-size: 13px;" />
+          </div>
+
+          <div class="history-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Market Asset</th>
+                  <th>Last Price</th>
+                  <th>24h Change</th>
+                  <th>24h High</th>
+                  <th>24h Low</th>
+                  <th>24h Volume</th>
+                  <th>7d Trend</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="markets-table-tbody">
+                <!-- Market rows injected here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 5: PORTFOLIO VIEW
+           ==================================================================== -->
+      <section id="view-portfolio" class="tab-view">
+        <div class="portfolio-view-wrap">
+          <div class="portfolio-overview-hero">
+            <div>
+              <div style="font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Consolidated Net Worth</div>
+              <div style="font-size: 38px; font-weight: 800; font-family: var(--font-mono); margin: 6px 0;" id="portfolio-total-value">$78,450.25</div>
+              <div style="font-size: 13px; color: var(--color-green);">+$1,420.50 (Unrealized PnL)</div>
+              
+              <div class="asset-distribution-bar" id="portfolio-dist-bar">
+                <div style="width: 56%; background: #3b82f6;" title="USDT"></div>
+                <div style="width: 34%; background: #facc15;" title="BTC"></div>
+                <div style="width: 8%; background: #10b981;" title="ETH"></div>
+                <div style="width: 2%; background: #a855f7;" title="SOL"></div>
+              </div>
+              <div style="display: flex; gap: 14px; margin-top: 10px; font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">
+                <span><span style="color: #3b82f6;">■</span> USDT 56%</span>
+                <span><span style="color: #facc15;">■</span> BTC 34%</span>
+                <span><span style="color: #10b981;">■</span> ETH 8%</span>
+                <span><span style="color: #a855f7;">■</span> Other 2%</span>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; justify-content: center; gap: 12px;">
+              <div style="background: rgba(5, 12, 30, 0.6); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-size: 11px; color: var(--text-muted);">Available Margin Balance</div>
+                <div style="font-size: 22px; font-weight: 800; font-family: var(--font-mono);" id="portfolio-avail-margin">$42,800.00 USDT</div>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button class="btn-primary-gold" id="portfolio-btn-deposit" style="flex: 1;">Deposit Crypto</button>
+                <button class="btn-secondary-blue" id="portfolio-btn-withdraw" style="flex: 1;">Withdrawal Request</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Asset Balances Table -->
+          <div class="wallets-panel">
+            <div class="panel-title">Asset Holdings & Free Balances</div>
+            <div class="history-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Asset</th>
+                    <th>Free Balance</th>
+                    <th>In Orders / Margin</th>
+                    <th>Total Balance</th>
+                    <th>USD Valuation</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="portfolio-assets-tbody">
+                  <!-- Injected via script.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 6: REQUESTS MANAGER (Refunds & Withdrawals)
+           ==================================================================== -->
+      <section id="view-requests" class="tab-view">
+        <div class="requests-view-wrap">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <h2 style="font-size: 24px; font-weight: 800;">Transaction & Refund Requests</h2>
+              <p style="font-size: 13px; color: var(--text-muted);">
+                Submit refund claims, track withdrawal approval stages, or review client petitions.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn-secondary-blue" id="btn-refresh-requests">🔄 Refresh</button>
+              <button class="btn-primary-gold" id="btn-open-submit-request">+ New Request</button>
+            </div>
+          </div>
+
+          <div id="requests-profile-context-banner"></div>
+
+          <!-- Status Filters -->
+          <div class="requests-filter-row">
+            <div class="req-filter-group" id="req-filter-buttons">
+              <button class="req-status-btn active" data-status="all">All</button>
+              <button class="req-status-btn" data-status="pending">Pending</button>
+              <button class="req-status-btn" data-status="approved">Approved</button>
+              <button class="req-status-btn" data-status="completed">Completed</button>
+              <button class="req-status-btn" data-status="rejected">Rejected</button>
+            </div>
+            <input type="text" id="requests-search-input" placeholder="Search by ID, client or reason..." style="width: 260px; font-size: 12px;" />
+          </div>
+
+          <!-- Requests List Table -->
+          <div class="history-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Request ID</th>
+                  <th>Client / Username</th>
+                  <th>Amount</th>
+                  <th>Type</th>
+                  <th>Reason / Description</th>
+                  <th>Destination Wallet</th>
+                  <th>Status</th>
+                  <th>Created At</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="requests-table-tbody">
+                <!-- Injected via script.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 7: API EXPLORER & DOCUMENTATION
+           ==================================================================== -->
+      <section id="view-api-docs" class="tab-view">
+        <div class="api-docs-wrap">
+          <div>
+            <h2 style="font-size: 24px; font-weight: 800;">REST API & Database Endpoints</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              Test live backend endpoints connected to the SQLite database (`userData.db`).
+            </p>
+          </div>
+
+          <!-- Health Endpoint -->
+          <div class="api-card">
+            <div class="api-endpoint-badge">
+              <span class="http-method get">GET</span>
+              <span>/api/health</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Check node server runtime status and database connectivity.</p>
+            <button class="btn-secondary-blue" style="padding: 6px 14px; font-size: 12px;" onclick="window.testApiEndpoint('/api/health', 'resp-health')">Execute Query ⚡</button>
+            <div class="api-response-box" id="resp-health">// Click 'Execute Query' to fetch response</div>
+          </div>
+
+          <!-- Users Endpoint -->
+          <div class="api-card">
+            <div class="api-endpoint-badge">
+              <span class="http-method get">GET</span>
+              <span>/api/users</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Fetch registered user accounts and authorization roles from SQLite database.</p>
+            <button class="btn-secondary-blue" style="padding: 6px 14px; font-size: 12px;" onclick="window.testApiEndpoint('/api/users', 'resp-users')">Execute Query ⚡</button>
+            <div class="api-response-box" id="resp-users">// Click 'Execute Query' to fetch response</div>
+          </div>
+
+          <!-- Requests Endpoint -->
+          <div class="api-card">
+            <div class="api-endpoint-badge">
+              <span class="http-method get">GET</span>
+              <span>/api/requests</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Query refund and withdrawal requests table with strict user data isolation (standard client receives only their own requests, admin receives all).</p>
+            <button class="btn-secondary-blue" style="padding: 6px 14px; font-size: 12px;" onclick="window.testApiEndpoint('/api/requests', 'resp-requests')">Execute Query ⚡</button>
+            <div class="api-response-box" id="resp-requests">// Click 'Execute Query' to fetch response</div>
+          </div>
+
+          <!-- Request ID Login Endpoint -->
+          <div class="api-card">
+            <div class="api-endpoint-badge">
+              <span class="http-method post">POST</span>
+              <span>/api/login-by-request</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Authenticate client session directly via REQUEST ID and CLIENT / USERNAME.</p>
+            <button class="btn-secondary-blue" style="padding: 6px 14px; font-size: 12px;" onclick="window.testApiEndpoint('/api/login-by-request', 'resp-login-req', 'POST', { requestId: 'REQ-1092', username: 'testing-test-2' })">Test with REQ-1092 ⚡</button>
+            <div class="api-response-box" id="resp-login-req">// Click 'Test with REQ-1092' to test request ID login</div>
+          </div>
+
+          <!-- User Profile Strict Isolation Endpoint -->
+          <div class="api-card">
+            <div class="api-endpoint-badge">
+              <span class="http-method get">GET</span>
+              <span>/api/users/:username</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Retrieve target profile. Strict security: Standard clients only access their own profile; Admin profile can access other users' profiles.</p>
+            <button class="btn-secondary-blue" style="padding: 6px 14px; font-size: 12px;" onclick="window.testApiEndpoint('/api/users/alex_vance', 'resp-user-profile')">Inspect Profile (alex_vance) ⚡</button>
+            <div class="api-response-box" id="resp-user-profile">// Click 'Inspect Profile' to verify profile access</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 8: LOGIN & REGISTER PAGE
+           ==================================================================== -->
+      <section id="view-login" class="tab-view">
+        <div class="login-page-wrap">
+          <div class="login-card">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #2563eb, #facc15); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;">🏛️</div>
+              <h2 style="font-size: 22px; font-weight: 800;">Meridian Bancorp Access</h2>
+              <p style="font-size: 12px; color: var(--text-muted);">Private Client Authentication & Treasury Sign-In</p>
+            </div>
+
+            <div class="login-toggle-tabs">
+              <button class="login-tab-btn active" id="auth-tab-login">Password Sign In</button>
+              <button class="login-tab-btn" id="auth-tab-request-login">REQUEST ID Sign In</button>
+              <button class="login-tab-btn" id="auth-tab-register">New Account</button>
+            </div>
+
+            <!-- Standard Password Login Form -->
+            <form id="form-login" style="display: flex; flex-direction: column; gap: 14px;">
+              <div class="form-group-custom">
+                <label>Email or Username</label>
+                <input type="text" id="login-input-username" value="joeldan228@gmail.com" required />
+              </div>
+              <div class="form-group-custom">
+                <label>Password</label>
+                <input type="password" id="login-input-password" value="JoelDan2026!" required />
+              </div>
+              <div id="login-error-msg" style="display: none; color: var(--color-red); font-size: 12px;"></div>
+              <div id="login-success-msg" style="display: none; color: var(--color-green); font-size: 12px;"></div>
+              <button type="submit" class="btn-primary-gold" style="width: 100%; justify-content: center; margin-top: 6px;">Authenticate & Enter Portal</button>
+            </form>
+
+            <!-- REQUEST ID + CLIENT / USERNAME Login Form -->
+            <form id="form-request-login" style="display: none; flex-direction: column; gap: 14px;">
+              <div style="background: rgba(30, 58, 138, 0.2); border: 1px solid var(--border-subtle); padding: 10px 12px; border-radius: var(--radius-sm); font-size: 11px; color: var(--text-muted); line-height: 1.5;">
+                <strong style="color: var(--accent-gold);">Private Client Access:</strong> Sign in directly with your assigned <strong>REQUEST ID</strong> and associated <strong>CLIENT / USERNAME</strong>. You will access your dedicated client profile with isolated custody.
+              </div>
+              <div class="form-group-custom">
+                <label>REQUEST ID</label>
+                <input type="text" id="login-input-req-id" placeholder="e.g. REQ-1092" value="REQ-1092" required />
+              </div>
+              <div class="form-group-custom">
+                <label>CLIENT / USERNAME</label>
+                <input type="text" id="login-input-req-username" placeholder="e.g. testing-test-2 or Alex Vance" value="testing-test-2" required />
+              </div>
+              <div id="req-login-error-msg" style="display: none; color: var(--color-red); font-size: 12px;"></div>
+              <div id="req-login-success-msg" style="display: none; color: var(--color-green); font-size: 12px;"></div>
+              <button type="submit" class="btn-primary-gold" style="width: 100%; justify-content: center; margin-top: 6px;">Verify Request ID & Enter Profile</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="form-register" style="display: none; flex-direction: column; gap: 12px;">
+              <div class="form-group-custom">
+                <label>Full Legal Name</label>
+                <input type="text" id="reg-input-name" placeholder="Alex Vance" required />
+              </div>
+              <div class="form-group-custom">
+                <label>Username / Email</label>
+                <input type="text" id="reg-input-username" placeholder="alex@meridian.com" required />
+              </div>
+              <div class="form-group-custom">
+                <label>Password (min 5 characters)</label>
+                <input type="password" id="reg-input-password" placeholder="••••••••" required />
+              </div>
+              <div class="form-group-custom">
+                <label>Assigned Role</label>
+                <select id="reg-input-role">
+                  <option value="user">Private Client (Standard - Isolated Profile)</option>
+                  <option value="admin">Operations Desk (Admin - All Profiles)</option>
+                </select>
+              </div>
+              <div id="reg-error-msg" style="display: none; color: var(--color-red); font-size: 12px;"></div>
+              <div id="reg-success-msg" style="display: none; color: var(--color-green); font-size: 12px;"></div>
+              <button type="submit" class="btn-primary-gold" style="width: 100%; justify-content: center; margin-top: 6px;">Create Private Account</button>
+            </form>
+
+            <!-- 1-Click Demo Accounts & Request ID Sign-ins -->
+            <div class="demo-logins-box">
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">1-Click Fast Sign-In:</div>
+              <div style="font-size: 10px; color: var(--text-faint); margin-bottom: 2px;">REQUEST ID & CLIENT Credentials:</div>
+              <div class="demo-account-chip" id="demo-chip-req-testing">
+                <span>📝 <strong>REQ-1092</strong> • testing-test-2 (Testing Account 2)</span>
+                <span style="color: var(--accent-gold); font-size: 10px;">Login →</span>
+              </div>
+              <div class="demo-account-chip" id="demo-chip-req-alex">
+                <span>📝 <strong>REQ-1088</strong> • alex_vance (Alex Vance)</span>
+                <span style="color: var(--accent-gold); font-size: 10px;">Login →</span>
+              </div>
+              <div class="demo-account-chip" id="demo-chip-req-sarah">
+                <span>📝 <strong>REQ-1075</strong> • sarah_crypto (Sarah Lin)</span>
+                <span style="color: var(--accent-gold); font-size: 10px;">Login →</span>
+              </div>
+              <div style="font-size: 10px; color: var(--text-faint); margin-top: 4px; margin-bottom: 2px;">Standard Password Credentials:</div>
+              <div class="demo-account-chip" id="demo-chip-admin">
+                <span>👑 <strong>Joel Dan (Admin)</strong> • joeldan228@gmail.com</span>
+                <span style="color: var(--accent-gold); font-size: 10px;">Select →</span>
+              </div>
+              <div class="demo-account-chip" id="demo-chip-client">
+                <span>👤 <strong>Alex Vance (Client)</strong> • alex_vance</span>
+                <span style="color: var(--accent-gold); font-size: 10px;">Select →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ====================================================================
+         MODALS
+         ==================================================================== -->
+    
+    <!-- Deposit & Withdraw Modal -->
+    <div class="modal-overlay" id="modal-deposit-withdraw">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title" id="dep-with-modal-title">Deposit Crypto</div>
+          <button class="modal-close-btn" id="btn-close-depwith">✕</button>
+        </div>
+
+        <div class="side-toggle-group" style="margin-bottom: 16px;">
+          <button class="side-btn buy active" id="modal-tab-deposit">Deposit</button>
+          <button class="side-btn sell" id="modal-tab-withdraw">Withdraw</button>
+        </div>
+
+        <!-- Network Selector -->
+        <div class="form-group-custom" style="margin-bottom: 14px;">
+          <label>Select Blockchain Network</label>
+          <select id="modal-select-network">
+            <option value="Trc-20">TRC-20 (Tron Network - Fast & Low Fee)</option>
+            <option value="Bep-20">BEP-20 (BNB Smart Chain)</option>
+            <option value="ERC-20">ERC-20 (Ethereum Network)</option>
+          </select>
+        </div>
+
+        <!-- Deposit View -->
+        <div id="modal-deposit-panel">
+          <div style="text-align: center; background: rgba(0,0,0,0.4); padding: 18px; border-radius: var(--radius-md); margin-bottom: 14px;">
+            <div style="font-size: 40px; margin-bottom: 8px;">📱</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Your Dedicated Custody Address:</div>
+            <div class="wallet-address-display" id="modal-deposit-address">
+              <span>TK4HkBbHm2ZaPMYE3PY93WGXb667xheFb5</span>
+              <button class="btn-copy-address" id="modal-btn-copy-dep">Copy</button>
+            </div>
+          </div>
+          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">
+            Send only USDT or supported assets to this address. Confirmations require 12 network blocks before balance reflects in your treasury.
+          </p>
+        </div>
+
+        <!-- Withdraw View -->
+        <div id="modal-withdraw-panel" style="display: none;">
+          <div class="form-group-custom" style="margin-bottom: 12px;">
+            <label>Recipient Wallet Address</label>
+            <input type="text" id="modal-withdraw-address" placeholder="e.g. 0x... or T..." />
+          </div>
+          <div class="form-group-custom" style="margin-bottom: 12px;">
+            <label>Amount (USDT)</label>
+            <input type="number" id="modal-withdraw-amount" value="5000" />
+          </div>
+          <button class="btn-primary-gold" id="modal-btn-submit-withdraw" style="width: 100%; justify-content: center; margin-top: 10px;">
+            Submit Clearance Request
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Swap Tokens Modal -->
+    <div class="modal-overlay" id="modal-swap">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">Instant Token Swap</div>
+          <button class="modal-close-btn" id="btn-close-swap">✕</button>
+        </div>
+
+        <div class="form-group-custom" style="margin-bottom: 12px;">
+          <label>You Pay</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="number" id="swap-pay-amount" value="1000" style="flex: 1;" />
+            <select id="swap-pay-token" style="width: 110px;">
+              <option value="USDT">USDT</option>
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH</option>
+              <option value="SOL">SOL</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 4px 0;">
+          <button id="swap-flip-btn" style="background: rgba(30, 58, 138, 0.4); padding: 6px 12px; border-radius: 20px; font-size: 14px;">⇅</button>
+        </div>
+
+        <div class="form-group-custom" style="margin-bottom: 16px;">
+          <label>You Receive (Estimated)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="swap-receive-amount" readonly style="flex: 1; color: var(--accent-gold); font-weight: 700;" value="0.0111" />
+            <select id="swap-receive-token" style="width: 110px;">
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH</option>
+              <option value="SOL">SOL</option>
+              <option value="USDT">USDT</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); background: rgba(5,12,30,0.6); padding: 10px; border-radius: 6px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>Rate:</span>
+            <span id="swap-rate-display">1 BTC = 89,450.00 USDT</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Slippage Tolerance:</span>
+            <span>0.2%</span>
+          </div>
+        </div>
+
+        <button class="btn-primary-gold" id="btn-execute-swap" style="width: 100%; justify-content: center;">
+          Execute Instant Swap
+        </button>
+      </div>
+    </div>
+
+    <!-- Submit Request Modal (for Refund/Withdrawal) -->
+    <div class="modal-overlay" id="modal-submit-request">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">Submit Transaction Request</div>
+          <button class="modal-close-btn" id="btn-close-subreq">✕</button>
+        </div>
+
+        <form id="form-submit-request-dialog" style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="form-group-custom">
+            <label>Request Type</label>
+            <select id="subreq-type">
+              <option value="refund">Slippage / Fee Refund Claim</option>
+              <option value="withdrawal">Custodial Balance Withdrawal</option>
+            </select>
+          </div>
+          <div class="form-group-custom">
+            <label>Amount</label>
+            <input type="number" id="subreq-amount" value="1500" required />
+          </div>
+          <div class="form-group-custom">
+            <label>Currency</label>
+            <select id="subreq-currency">
+              <option value="USD">USD</option>
+              <option value="USDT">USDT</option>
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH</option>
+            </select>
+          </div>
+          <div class="form-group-custom">
+            <label>Settlement Wallet Address</label>
+            <input type="text" id="subreq-wallet" value="0x71C802...4e89" required />
+          </div>
+          <div class="form-group-custom">
+            <label>Reason & Justification</label>
+            <textarea id="subreq-reason" rows="3" required>Volatile execution slippage compensation request</textarea>
+          </div>
+          <button type="submit" class="btn-primary-gold" style="width: 100%; justify-content: center; margin-top: 6px;">
+            Submit to Compliance Desk
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav id="mobile-bottom-nav">
+      <button class="mob-nav-item active" data-tab="home"><span>🏠</span><span>Home</span></button>
+      <button class="mob-nav-item" data-tab="client-dashboard"><span>💼</span><span>Vault</span></button>
+      <button class="mob-nav-item" data-tab="trade"><span>📈</span><span>Trade</span></button>
+      <button class="mob-nav-item" data-tab="markets"><span>🌐</span><span>Markets</span></button>
+      <button class="mob-nav-item" data-tab="requests"><span>📝</span><span>Requests</span></button>
+    </nav>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Main Application JavaScript -->
+    <script src="script.js"></script>
   </body>
 </html>

@@ -1,108 +1,34 @@
-# Project Name
+# Meridian Bancorp — Private Wealth & Institutional Digital Custody
 
-User Authentication API
+A high-performance institutional banking portal rewritten in standalone **vanilla HTML, CSS, and modern ES6+ JavaScript**, backed by Node.js, Express, and an SQLite treasury database.
 
-## Description
+## Architecture & Structure
 
-This project implements a User Authentication API using Node.js, Express.js, and SQLite. The API provides endpoints for user registration, login, and password change. User information is stored in a SQLite database, and passwords are hashed using bcrypt for security.
+- `index.html`: Standalone semantic HTML5 layout with dark-mode institutional banking portal, navigation router, and modular views.
+- `styles.css`: Complete vanilla stylesheet implementing high-frequency trading theme, responsive mobile-first grid, depth visualizers, and dark gold accents.
+- `script.js`: Clean ES6+ modular JavaScript handling reactive state, HTML5 Canvas candlestick charting, live order books, trade streams, token swapping, and API calls.
+- `server.ts`: Express backend serving the standalone application and handling persistent SQLite endpoints (`/api/users`, `/api/requests`, `/api/login`, `/api/register`, `/api/health`).
+- `userData.db`: SQLite database storing user accounts and transaction/refund requests.
 
-## Installation
+## Key Features
 
-1. Clone the repository: `[git clone https://github.com/username/repository.git](https://github.com/dev-ajithkumar/express-auth-api.git)`
-2. Navigate to the project directory: `cd repository`
-3. Install the dependencies: `npm install`
+1. **Institutional Landing Page**: Overview of digital custody, MPC cold-storage vaults, live volume statistics, and key architecture pillars.
+2. **Private Client Dashboard**: Real-time available reserve balances ($47,986.00), required settlement fee accounting ($5,960.00), multi-network custody wallets (TRC-20, BEP-20, ERC-20), and searchable historical tranches ledger.
+3. **High-Frequency Trading Terminal (Spot & Perps)**:
+   - High-DPI HTML5 Canvas Candlestick Chart with 7 timeframe intervals (1m, 5m, 15m, 1H, 4H, 1D, 1W), EMA(20), Volume histogram, and line chart toggles.
+   - Real-time Order Book with dynamic depth visualization and spread calculations.
+   - Limit, Market, and Stop order execution with leverage sliders and quick balance fill buttons.
+   - Open positions and orders tracking with real-time PnL and 1-click position settlement.
+4. **Markets Screener**: Live market metrics, category filtering (Layer 1, AI & Data, Infra, Meme), search bar, and 7-day trend sparklines.
+5. **Portfolio & Treasury**: Consolidated net worth calculations, visual asset allocation breakdown, and holding balances.
+6. **Requests & Refund Manager**: Submission of slippage/fee claims and balance withdrawals, with dedicated compliance controls (Approve, Reject, Notes, Delete) for authorized administrators.
+7. **Interactive REST API Explorer**: Live query execution panel testing backend endpoints against the SQLite database.
+8. **Client Authentication**: Multi-role support (`admin` and `user`), password hashing, and instant 1-click demo accounts.
 
-## Database Setup
+## Running Locally
 
-1. Open the `userData.db` file using an SQLite database management tool.
-2. Run the following SQL query to create the `user` table:
-
-```sql
-CREATE TABLE IF NOT EXISTS user (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
-    password TEXT NOT NULL,
-    gender TEXT NOT NULL,
-    location TEXT NOT NULL
-);
+Run directly with Node.js:
+```bash
+npm run dev
 ```
-
-## Usage
-
-1. Start the server: `npm start`
-2. Use an API testing tool (e.g., Postman) to send requests to the following endpoints:
-
-### GET /register
-
-- Description: Fetches all users from the database.
-- Response: Array of user objects.
-
-### POST /register
-
-- Description: Registers a new user.
-- Request Body: JSON object with the following properties:
-  - `username`: User's username (string, required).
-  - `name`: User's name (string, required).
-  - `password`: User's password (string, required).
-  - `gender`: User's gender (string, required).
-  - `location`: User's location (string, required).
-- Response:
-  - Success: "User created successfully".
-  - Error (User already exists): "User already exists".
-  - Error (Password too short): "Password is too short".
-
-### POST /login
-
-- Description: Authenticates a user.
-- Request Body: JSON object with the following properties:
-  - `username`: User's username (string, required).
-  - `password`: User's password (string, required).
-- Response:
-  - Success: "Login success!".
-  - Error (Invalid user): "Invalid user".
-  - Error (Invalid password): "Invalid password".
-
-### PUT /change-password
-
-- Description: Changes the password for a user.
-- Request Body: JSON object with the following properties:
-  - `username`: User's username (string, required).
-  - `oldPassword`: User's current password (string, required).
-  - `newPassword`: User's new password (string, required).
-- Response:
-  - Success: "Password updated".
-  - Error (Invalid current password): "Invalid current password".
-  - Error (New password too short): "Password is too short".
-
-## Dependencies
-
-- express: Web framework for Node.js
-- sqlite: SQLite database driver for Node.js
-- sqlite3: SQLite library for Node.js
-- bcrypt: Library for password hashing
-- path: Module for file path manipulation
-
-## GitHub Pages Deployment (`gh-pages`)
-
-This application is fully configured for deployment on **GitHub Pages**:
-
-### Option 1: Automatic Deployment via GitHub Actions (Recommended)
-1. Push this repository to GitHub on `main` or `master`.
-2. Go to your GitHub repository **Settings** > **Pages**.
-3. Under **Build and deployment** > **Source**, select **GitHub Actions**.
-4. The workflow in `.github/workflows/deploy.yml` will automatically build the static assets with relative paths (`./`) and deploy the app to `https://<username>.github.io/<repository-name>/`.
-
-### Option 2: Deploying via `gh-pages` Branch
-1. Run the deploy script locally:
-   ```bash
-   npm run deploy
-   ```
-2. In your repository **Settings** > **Pages**, set **Source** to `Deploy from a branch` and choose the `gh-pages` branch.
-
-### Key Features Configured for GitHub Pages:
-- **Relative Asset Paths (`base: './'`)**: Assets load properly under any repository subfolder or custom domain.
-- **SPA Fallback (`public/404.html`)**: Prevents 404 errors when reloading routes directly.
-- **`.nojekyll`**: Prevents Jekyll from omitting required build files.
-- **Offline & Static Fallback Mode**: Client authentication, requests management, institutional trading dashboard, and performance analytics function seamlessly in static preview even without a Node.js server.
-
+Navigate to `http://localhost:3000` or open `index.html` in any browser.

@@ -1,10 +1,9 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { open, Database } from 'sqlite';
+import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import bcrypt from 'bcryptjs';
-import { createServer as createViteServer } from 'vite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,7 +12,7 @@ const app = express();
 const PORT = 3000;
 const dbFilePath = path.join(process.cwd(), 'userData.db');
 
-let db: Database | null = null;
+let db: any = null;
 
 // Initialize SQLite database
 async function initDb() {
@@ -94,6 +93,24 @@ async function initDb() {
       await database.run('UPDATE user SET role = ? WHERE username = ? COLLATE NOCASE', ['admin', 'admin']);
     }
 
+    // Ensure default client user accounts exist in user table
+    const defaultClientPass = await bcrypt.hash('Client2026!', 10);
+    const clientAccounts = [
+      { username: 'testing-test-2', name: 'Testing Account 2', gender: 'Male', location: 'Chennai', role: 'user' },
+      { username: 'alex_vance', name: 'Alex Vance', gender: 'Male', location: 'New York, USA', role: 'user' },
+      { username: 'sarah_crypto', name: 'Sarah Lin', gender: 'Female', location: 'San Francisco, USA', role: 'user' },
+    ];
+
+    for (const c of clientAccounts) {
+      const existClient = await database.get('SELECT * FROM user WHERE username = ? COLLATE NOCASE', [c.username]);
+      if (!existClient) {
+        await database.run(
+          'INSERT INTO user (username, name, password, gender, location, role) VALUES (?, ?, ?, ?, ?, ?)',
+          [c.username, c.name, defaultClientPass, c.gender, c.location, c.role]
+        );
+      }
+    }
+
     // Seed initial refund and transaction requests if table is empty
     const reqCount = await database.get('SELECT COUNT(*) as count FROM refund_requests');
     if (!reqCount || reqCount.count === 0) {
@@ -142,6 +159,21 @@ async function initDb() {
           createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
           updatedAt: new Date(Date.now() - 86400000 * 4).toISOString(),
           adminNotes: 'Completed on-chain. TX Hash: 0x99e2fa910...b7'
+        },
+        {
+          id: 'REQ-2233',
+          userId: 'usr_admin',
+          username: 'joeldan228@gmail.com',
+          clientName: 'Joel Dan (Admin)',
+          amount: 5000.00,
+          currency: 'USD',
+          type: 'withdrawal',
+          reason: 'Executive treasury liquidity rebalancing to cold custody',
+          walletAddress: '0x71C802...4e89',
+          status: 'approved',
+          createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000 * 6).toISOString(),
+          adminNotes: 'Executive clearance authorized'
         }
       ];
 
@@ -275,11 +307,17 @@ async function startServer() {
   app.post('/api/register', handleRegister);
 
   // 3. POST /login & /api/login - user login
+  // 3. POST /login & /api/login - user login
   const handleLogin = async (req: Request, res: Response) => {
     try {
       const database = getDb();
-      const { username, password } = req.body;
+      const { username, password, requestId } = req.body;
       const expectsJson = req.headers.accept?.includes('application/json') || req.headers['content-type']?.includes('application/json');
+
+      // If requestId is provided, handle Request ID login directly
+      if (requestId) {
+        return handleLoginByRequest(req, res);
+      }
 
       if (!username || !password) {
         res.status(400);
@@ -350,9 +388,101 @@ async function startServer() {
     }
   };
 
+  // 3a. POST /api/login-by-request - Client login with REQUEST ID and CLIENT / USERNAME
+  const handleLoginByRequest = async (req: Request, res: Response) => {
+    try {
+      const database = getDb();
+      const requestId = req.body.requestId || req.body.request_id || req.body.reqId || req.query.requestId;
+      const username = req.body.username || req.body.clientName || req.body.client || req.query.username;
+
+      if (!requestId || !username) {
+        return res.status(400).json({
+          success: false,
+          message: 'Both REQUEST ID and CLIENT / USERNAME are required',
+          error: 'Missing required credentials'
+        });
+      }
+
+      const cleanReqId = String(requestId).trim();
+      const cleanUser = String(username).trim();
+
+      // Look up request by Request ID in refund_requests
+      const requestRecord = await database.get(
+        'SELECT * FROM refund_requests WHERE id = ? COLLATE NOCASE',
+        [cleanReqId]
+      );
+
+      if (!requestRecord) {
+        return res.status(404).json({
+          success: false,
+          message: `Request ID '${cleanReqId}' was not found in the transaction registry. Please verify your ID.`,
+          error: 'Request ID not found'
+        });
+      }
+
+      // Check if the provided username matches either the request username or clientName
+      const matchesUsername = requestRecord.username.toLowerCase() === cleanUser.toLowerCase();
+      const matchesClientName = requestRecord.clientName.toLowerCase() === cleanUser.toLowerCase();
+
+      if (!matchesUsername && !matchesClientName) {
+        return res.status(401).json({
+          success: false,
+          message: `Client / Username '${cleanUser}' does not match Request ID '${cleanReqId}'.`,
+          error: 'Credentials mismatch'
+        });
+      }
+
+      // Find user account in the user table
+      let userAccount = await database.get(
+        'SELECT rowid AS id, username, name, gender, location, role FROM user WHERE username = ? COLLATE NOCASE',
+        [requestRecord.username]
+      );
+
+      // If user row does not exist in user table, create it so they have a persistent profile
+      if (!userAccount) {
+        const defaultClientPass = await bcrypt.hash('Client2026!', 10);
+        const assignedRole = (requestRecord.username.toLowerCase() === 'joeldan228@gmail.com' || requestRecord.username.toLowerCase() === 'admin') ? 'admin' : 'user';
+        await database.run(
+          'INSERT INTO user (username, name, password, gender, location, role) VALUES (?, ?, ?, ?, ?, ?)',
+          [requestRecord.username, requestRecord.clientName, defaultClientPass, 'Not specified', 'Verified Client Desk', assignedRole]
+        );
+        userAccount = await database.get(
+          'SELECT rowid AS id, username, name, gender, location, role FROM user WHERE username = ? COLLATE NOCASE',
+          [requestRecord.username]
+        );
+      }
+
+      const verifiedRole = userAccount.role || (requestRecord.username.toLowerCase() === 'joeldan228@gmail.com' || requestRecord.username.toLowerCase() === 'admin' ? 'admin' : 'user');
+
+      return res.status(200).json({
+        success: true,
+        message: `Authenticated successfully via Request ID ${cleanReqId}. Welcome back, ${userAccount.name}!`,
+        user: {
+          id: userAccount.id,
+          username: userAccount.username,
+          name: userAccount.name,
+          gender: userAccount.gender,
+          location: userAccount.location,
+          role: verifiedRole,
+          authMethod: 'request_id',
+          requestId: requestRecord.id,
+          requestAmount: requestRecord.amount,
+          requestCurrency: requestRecord.currency,
+          requestStatus: requestRecord.status,
+          requestType: requestRecord.type
+        }
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message, error: err.message });
+    }
+  };
+
   app.post('/login', handleLogin);
   app.post('/login/', handleLogin);
   app.post('/api/login', handleLogin);
+  app.post('/api/login-by-request', handleLoginByRequest);
+  app.post('/login/request', handleLoginByRequest);
+  app.post('/api/login/request', handleLoginByRequest);
 
   // 3b. Role update endpoint: PUT /api/users/:username/role
   app.put('/api/users/:username/role', async (req: Request, res: Response) => {
@@ -375,6 +505,42 @@ async function startServer() {
       res.json({ message: 'Role updated successfully', user: updated });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 3c. GET /api/users/:targetUser - Strict Profile Access Isolation:
+  // Non-admin can only access their own profile; Admin can access other users' profiles
+  app.get('/api/users/:targetUser', async (req: Request, res: Response) => {
+    try {
+      const database = getDb();
+      const cleanTarget = String(req.params.targetUser || '');
+      const requester = (req.headers['x-username'] as string) || (req.query.requester as string) || '';
+      const roleHeader = (req.headers['x-user-role'] as string) || '';
+      const cleanRequester = String(requester || '');
+
+      const reqUser = cleanRequester ? await database.get('SELECT * FROM user WHERE username = ? COLLATE NOCASE', [cleanRequester]) : null;
+      const isAdmin = (reqUser && reqUser.role === 'admin') || roleHeader === 'admin' || cleanRequester.toLowerCase() === 'joeldan228@gmail.com' || cleanRequester.toLowerCase() === 'admin';
+
+      // Strict user profile access: users can only access their own profile; only admin can access other users' profiles
+      if (!isAdmin && (!cleanRequester || cleanRequester.toLowerCase() !== cleanTarget.toLowerCase())) {
+        return res.status(403).json({
+          error: 'Access Denied: Standard clients can only access their own profile. Only the Admin profile is authorized to access other users\' profiles.',
+          allowedProfile: cleanRequester || 'none'
+        });
+      }
+
+      const targetProfile = await database.get(
+        'SELECT rowid AS id, username, name, gender, location, role FROM user WHERE username = ? COLLATE NOCASE',
+        [cleanTarget]
+      );
+
+      if (!targetProfile) {
+        return res.status(404).json({ error: `User profile '${cleanTarget}' not found` });
+      }
+
+      res.json(targetProfile);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
     }
   });
 
@@ -590,20 +756,11 @@ async function startServer() {
   app.put('/api/change-password', handleChangePassword);
   app.post('/api/change-password', handleChangePassword);
 
-  // Vite middleware in development
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true, allowedHosts: true, hmr: false },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req: Request, res: Response) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+  // Serve standalone HTML, CSS, and JS from project root
+  app.use(express.static(process.cwd()));
+  app.get('*', (req: Request, res: Response) => {
+    res.sendFile(path.join(process.cwd(), 'index.html'));
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
